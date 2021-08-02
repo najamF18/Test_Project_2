@@ -12,7 +12,6 @@ class UserSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        # exclude = ('groups', 'user_permissions' )
         fields = ('first_name', 'last_name', 'email','password', 'confirmPassword', 'profile_photo')
         extra_kwargs = {"password": {"write_only": True}}
         
