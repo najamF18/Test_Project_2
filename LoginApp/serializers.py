@@ -24,6 +24,7 @@ class UserSerializer(serializers.ModelSerializer):
             user = User.objects.create(**validated_data)
             # hashing the password for security
             user.set_password(user.password)
+            user.is_staff = True
             user.save()
             return user
         else:
