@@ -17,6 +17,7 @@ class ChatThreadSerializer(serializers.ModelSerializer):
     
     sender = serializers.StringRelatedField()
     receiver = serializers.StringRelatedField()
+    message = MessageSerializer(many=True)
     
     class Meta:
         model = ChatThread
