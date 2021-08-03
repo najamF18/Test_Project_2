@@ -16,7 +16,8 @@ from django.shortcuts import get_object_or_404
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate,login,logout
 from django.core.mail import EmailMessage
-
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+from rest_framework.permissions import IsAuthenticated
 # Create your views here.
     
 class RegisterUserView(ListCreateAPIView):
@@ -58,6 +59,8 @@ class LoginView(APIView):
         
 class LogoutView(APIView):
     
+    authentications_classes = [BasicAuthentication]
+    permission_classes = [IsAuthenticated]
     def get(self, request):
         if request.user.is_authenticated:
             logout(request)
@@ -69,12 +72,13 @@ class LogoutView(APIView):
 class RequestChangePasswordView(APIView):
     
     serializer_class = RequestChangePasswordSerializer 
+    authentications_classes = [BasicAuthentication]
+    permission_classes = [IsAuthenticated]
     def post(self, request):
         try:
             user = User.objects.get(email=request.data["email"])
             if user:
-                print("user")
-                url_password_change = reverse("change_password", request=request, args=["ad@ad.com"])
+                url_password_change = reverse("change_password", request=request, args=user.email)
                 email = EmailMessage('Password change request', url_password_change, to=[user.email])
                 email.send()
                 return Response({"message" : "check your mail we have sent you a link to change password"})
@@ -85,16 +89,13 @@ class RequestChangePasswordView(APIView):
 class ChangePasswordView(APIView):
     
     serializer_class = ChangePasswordSerializer
+    authentications_classes = [BasicAuthentication]
+    permission_classes = [IsAuthenticated]
     
     def post(self, request, email):
         user = User.objects.get(email=email)
         if user:
-            print(user.email)
-            print("new password ", request.data["new_password"])
-            print("confirm new password ", request.data["confirm_new_password"])
             if request.data["new_password"] == request.data["confirm_new_password"]:
-                # user.password = request.data["new_password"]
-                # user_new_pass = user.save()
                 user.set_password(user.password)
                 user.save()
                 
@@ -103,7 +104,8 @@ class ChangePasswordView(APIView):
 class ListLoggedInUser(RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    
+    authentications_classes = [BasicAuthentication]
+    permission_classes = [IsAuthenticated]
     def get(self, request):
         try:
             logged_user = User.objects.get(email=request.user.email)

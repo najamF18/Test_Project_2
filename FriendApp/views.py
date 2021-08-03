@@ -5,12 +5,15 @@ from rest_framework.generics import CreateAPIView, ListAPIView, UpdateAPIView, R
 from .serializers import FriendListSerializer, RequestSerializer, FriendRequestSerializer
 from rest_framework.response import Response
 from LoginApp.models import User
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+from rest_framework.permissions import IsAuthenticated
 # Create your views here.
 
 class ListAllFriendsView(ListAPIView):
     queryset = FriendList.objects.all()
     serializer_class = FriendListSerializer
-    
+    authentications_classes = [BasicAuthentication]
+    permission_classes = [IsAuthenticated]
     def get(self, request):
         obj = FriendList.objects.filter(user=request.user)
         friend_list_serializer = self.serializer_class(obj, many=True, context={"request":request})
@@ -23,7 +26,8 @@ class ListAllFriendsView(ListAPIView):
 class SendFriendRequestView(CreateAPIView):
     queryset = FriendRequest.objects.all()
     serializer_class = RequestSerializer
-    
+    authentications_classes = [BasicAuthentication]
+    permission_classes = [IsAuthenticated]
     def post(self, request):
         try:
             receiver = User.objects.get(id=request.data["id"])
@@ -35,7 +39,8 @@ class SendFriendRequestView(CreateAPIView):
 class ListAllFriendRequestView(ListAPIView):
     queryset = FriendRequest.objects.all()
     serializer_class = FriendRequestSerializer
-    
+    authentications_classes = [BasicAuthentication]
+    permission_classes = [IsAuthenticated]
     def get(self,request):
         obj = FriendRequest.objects.filter(receiver=request.user)  
         print(request.user)
@@ -48,7 +53,8 @@ class ListAllFriendRequestView(ListAPIView):
         
 class AcceptRequestView(APIView):
     serializer_class = RequestSerializer
-    
+    authentications_classes = [BasicAuthentication]
+    permission_classes = [IsAuthenticated]
     def post(self, request):
         try:
             friend_request = FriendRequest.objects.get(id=request.data["id"])
@@ -64,7 +70,8 @@ class AcceptRequestView(APIView):
         
 class DeleteRequestView(APIView):
     serializer_class = RequestSerializer
-    
+    authentications_classes = [BasicAuthentication]
+    permission_classes = [IsAuthenticated]
     def post(self, request):
         try:
             friend_request = FriendRequest.objects.get(id=request.data["id"])
@@ -75,7 +82,8 @@ class DeleteRequestView(APIView):
     
 class UnfriendView(APIView):
     serializer_class = RequestSerializer
-    
+    authentications_classes = [BasicAuthentication]
+    permission_classes = [IsAuthenticated]
     def get(self, request, user_id):
         try:
             my_friend_list = FriendList.objects.get_or_create(user=request.user)

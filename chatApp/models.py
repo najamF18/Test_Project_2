@@ -14,7 +14,7 @@ class Message(models.Model):
 class ChatThread(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sender_user_msg')
     receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='receiver_user_msg')
-    thread = models.ManyToManyField(Message, related_name="thread")
+    message = models.ManyToManyField(Message, related_name="thread")
     
     def __str__(self):
         return self.sender.email
