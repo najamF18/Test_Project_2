@@ -1,13 +1,14 @@
 from django.shortcuts import render
-from .models import Message, ChatThread
+from .models import Message, ChatThread, photos
 from rest_framework.views import APIView
 from rest_framework.generics import CreateAPIView, ListAPIView, UpdateAPIView, RetrieveAPIView, ListCreateAPIView
-from .serializers import MessageSerializer, ChatThreadSerializer, SendMessageSerializer
+from .serializers import MessageSerializer, ChatThreadSerializer
 from rest_framework.response import Response
 from LoginApp.models import User
 from django.db.models import Q
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 # Create your views here.
 
 class ListAllThreadOfLoggedUser(ListAPIView):
@@ -27,17 +28,29 @@ class ListAllMessagesInThread(ListAPIView):
     authentications_classes = [BasicAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request, chat_id):
-        messages = ChatThread.objects.get(id=chat_id)
-        messages_serialized = self.serializer_class(messages.thread, many=True, context={"request":request})
+        thread = ChatThread.objects.get(id=chat_id)
+        messages = Message.objects.filter(thread=thread)
+        # photos_list = []
+        # for m in messages:
+        #     photos_list.append(photos.objects.filter(message=m))
+        # print(photos_list)
+        messages_serialized = self.serializer_class(messages, many=True, context={"request":request})
         return Response(messages_serialized.data)
         
-class SendMessageInChatThread(APIView):
-    
-    serializer_class = SendMessageSerializer
+class SendMessageInChatThread(ListCreateAPIView):
+    queryset = Message.objects.all()
+    serializer_class = MessageSerializer
     authentications_classes = [BasicAuthentication]
     permission_classes = [IsAuthenticated]
-    def post(self, request, chat_id):
-        thread = ChatThread.objects.get(id=chat_id)
-        msg = Message.objects.get_or_create(message=request.data["content"])
-        thread.thread.add(msg[0])
-        return Response({"status": "Your message has been sent"})
+    # parser_classes = (FormParser, MultiPartParser,JSONParser)
+    def post(self, request):
+        response = dict()
+        message_serialized = self.serializer_class(data=request.data, context={'request': request})
+        # print(message_serialized)
+        if message_serialized.is_valid():
+            message_serialized.save()
+            return Response({"status": "Your message has been sent"})
+        
+        else:
+            print(message_serialized.errors)
+            return Response({"status": "Your message could not be sent been sent"})

@@ -7,7 +7,7 @@ from django.conf.urls.static import static
 urlpatterns = [
         path('chatApp/api/chats/list', ListAllThreadOfLoggedUser.as_view(), name="list_all_threads"),
         path('chatApp/api/messages/<int:chat_id>/list', ListAllMessagesInThread.as_view(), name="list_all_messages_in_thread"),
-        path('chatApp/api/messages/<int:chat_id>/send', SendMessageInChatThread.as_view(), name="send_message_in_thread"),
+        path('chatApp/api/messages/send', SendMessageInChatThread.as_view(), name="send_message_in_thread"),
         
 ]
 

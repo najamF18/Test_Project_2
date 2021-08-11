@@ -5,8 +5,11 @@ from rest_framework.generics import CreateAPIView, ListAPIView, UpdateAPIView, R
 from .serializers import FriendListSerializer, RequestSerializer, FriendRequestSerializer
 from rest_framework.response import Response
 from LoginApp.models import User
+from LoginApp.serializers import UserSerializer
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.permissions import IsAuthenticated
+from chatApp.models import ChatThread
+from itertools import chain
 # Create your views here.
 
 class ListAllFriendsView(ListAPIView):
@@ -64,6 +67,7 @@ class AcceptRequestView(APIView):
             sender_friend_list = FriendList.objects.get_or_create(user=friend_request.sender)
             sender_friend_list[0].friends.add(request.user)
             friend_request.delete()
+            chat_thread = ChatThread.objects.get_or_create(sender=request.user, receiver=friend_request.sender)
             return Response({"message": "Friend Request Accepted"})
         except Exception as e:
             return Response({":message":"Something went wrong"})
@@ -94,7 +98,25 @@ class UnfriendView(APIView):
             return Response({"message": "Unfriended Successfully"})
         except Exception as e:
             return Response({":message":"Something went wrong"})
-
+        
+class PeopleYouMayKnow(ListAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    authentications_classes = [BasicAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        # here i am getting all the friends' ids of logged in user
+        all_friends_ids = FriendList.objects.filter(user=request.user).values_list("friends", flat=True)
+        # here i am excluding all users whose ids are same as of 'all_friends_ids' and the logged in user from all users
+        all_stranger_user = User.objects.all().exclude(id__in=all_friends_ids).exclude(id__in=[request.user.id])
+        user_serializer = self.serializer_class(all_stranger_user, many=True, context={"request":request})
+        if user_serializer:
+            # when we user 'filter' while querying data we need to return friend_list_serializer.data so data is in json
+            return Response(user_serializer.data)
+        else:
+            return Response({"message":"something went wrong"})
+        
 
         
         
