@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from django.views.generic import ListView, DetailView, View
 from rest_framework.generics import CreateAPIView, ListAPIView, UpdateAPIView, RetrieveAPIView, ListCreateAPIView
 from .models import User
+from django.dispatch import receiver
 from rest_framework.reverse import reverse
 from .serializers import ( 
                           UserSerializer, 
@@ -12,12 +13,14 @@ from .serializers import (
                           RequestChangePasswordSerializer
                         )
 from rest_framework.response import Response
+from django_rest_passwordreset.signals import reset_password_token_created
 from django.shortcuts import get_object_or_404
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate,login,logout
 from django.core.mail import EmailMessage
-from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.authtoken.models import Token
 # Create your views here.
     
 class RegisterUserView(ListCreateAPIView):
@@ -33,6 +36,8 @@ class RegisterUserView(ListCreateAPIView):
             response["email"] = user.email
             response["message"] = "User registered successfully"
             return Response(response)
+        else:
+            return Response({"message": "invalid values entered"})
             
     
 class LoginView(APIView):
@@ -49,9 +54,12 @@ class LoginView(APIView):
         print(request.user)
         if user_auth:
             login(request, user)
+            token = Token.objects.get_or_create(user=user)
+            print(token[0].key)
             print(request.user)
             response = dict()
             response["message"] = "User logged in succesfully"
+            response["token"] = token[0].key
             return Response(response)
         else:
             
@@ -59,61 +67,62 @@ class LoginView(APIView):
         
 class LogoutView(APIView):
     
-    authentications_classes = [BasicAuthentication]
-    permission_classes = [IsAuthenticated]
+    # authentications_classes = [TokenAuthentication]
+    # permission_classes = [IsAuthenticated]
     def get(self, request):
         if request.user.is_authenticated:
+            token = Token.objects.get(user=request.user)
+            token.delete()
             logout(request)
             return Response({"message": "successfully logged out"})
         else:
             return Response({"message":"No user is logged in"})
         
-        
-class RequestChangePasswordView(APIView):
-    
-    serializer_class = RequestChangePasswordSerializer 
-    authentications_classes = [BasicAuthentication]
-    permission_classes = [IsAuthenticated]
-    def post(self, request):
-        try:
-            user = User.objects.get(email=request.data["email"])
-            if user:
-                url_password_change = reverse("change_password", request=request, args=user.email)
-                email = EmailMessage('Password change request', url_password_change, to=[user.email])
-                email.send()
-                return Response({"message" : "check your mail we have sent you a link to change password"})
-        except Exception as e:
-            print(e)
-            return Response({"message":"not a valid user"})
 
 class ChangePasswordView(APIView):
     
     serializer_class = ChangePasswordSerializer
-    authentications_classes = [BasicAuthentication]
+    # authentications_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     
-    def post(self, request, email):
-        user = User.objects.get(email=email)
+    def post(self, request):
+        user = request.user
         if user:
-            if request.data["new_password"] == request.data["confirm_new_password"]:
-                user.set_password(user.password)
+            # check password method validates the password, we can not validate password without check method because it is hashed
+            if user.check_password(request.data["old_password"]):
+                print("match")
+                user.set_password(request.data["new_password"])
                 user.save()
+                return Response({"message": "Password Changed successfully"})
+            else:
+                return Response({"message": "Previous Password incorrect"})                
+            
                 
-            return Response({"message": "Password Changed successfully"})
+
         
 class ListLoggedInUser(RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    authentications_classes = [BasicAuthentication]
+    # authentications_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request):
         try:
+            # print (reset_password_token.user.email)
             logged_user = User.objects.get(email=request.user.email)
             if logged_user:
                 response = self.serializer_class(logged_user, context={"request": request}).data
             return Response(response)
         except Exception as e:
             return Response(e)
+        
+
+# this signal is fired when we post request at "api/password_rest" it returns a token
+@receiver(reset_password_token_created)
+def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
+    user_email = reset_password_token.user.email
+    url = "http://127.0.0.1:8000/api/password_reset/confirm/" + "?token=" + reset_password_token.key
+    email = EmailMessage('Password change request', url, to=[reset_password_token.user.email])
+    email.send()
 
         
         

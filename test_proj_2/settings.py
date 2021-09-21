@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 
 from pathlib import Path
 import os
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -42,6 +43,9 @@ INSTALLED_APPS = [
     # Installed Packages
     'rest_framework',
     'drf_spectacular',
+    "rest_framework.authtoken",
+    'django_rest_passwordreset',
+
     
     # custom apps
     'LoginApp',
@@ -85,9 +89,9 @@ AUTH_USER_MODEL = 'LoginApp.User'
 REST_FRAMEWORK = {
         # YOUR SETTINGS
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-#         'DEFAULT_AUTHENTICATION_CLASSES': [
-#         'rest_framework.authentication.TokenAuthentication',
-#     ],
+        'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
 # 'DEFAULT_PERMISSION_CLASSES': [
 #     'rest_framework.permissions.IsAuthenticated',
 # ]
@@ -153,12 +157,12 @@ MEDIA_ROOT=os.path.join(BASE_DIR,'media')
 MEDIA_URL='/media/'
 
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_USE_TLS = True
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = 'najamazam420@gmail.com'
-EMAIL_HOST_PASSWORD = 'batchF18'
-EMAIL_PORT = 587
+EMAIL_BACKEND = config('EMAIL_BACKEND')
+EMAIL_USE_TLS = config('EMAIL_USE_TLS')
+EMAIL_HOST = config('EMAIL_HOST')
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+EMAIL_PORT = config('EMAIL_PORT')
 
 
 # Default primary key field type

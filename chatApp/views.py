@@ -28,14 +28,21 @@ class ListAllMessagesInThread(ListAPIView):
     authentications_classes = [BasicAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request, chat_id):
-        thread = ChatThread.objects.get(id=chat_id)
-        messages = Message.objects.filter(thread=thread)
-        # photos_list = []
-        # for m in messages:
-        #     photos_list.append(photos.objects.filter(message=m))
-        # print(photos_list)
-        messages_serialized = self.serializer_class(messages, many=True, context={"request":request})
-        return Response(messages_serialized.data)
+        try:
+            thread = ChatThread.objects.get(id=chat_id)
+            if thread.sender == request.user or thread.receiver == request.user:
+                messages = Message.objects.filter(thread=thread)
+            # photos_list = []
+            # for m in messages:
+            #     photos_list.append(photos.objects.filter(message=m))
+            # print(photos_list)
+                messages_serialized = self.serializer_class(messages, many=True, context={"request":request})
+                return Response(messages_serialized.data)
+            else:
+                return Response({"message":"you can not see messages of someone else's chat"})
+        except Exception as e:
+            print(e)
+            return Response({"message":"No chat present of specified id"})
         
 class SendMessageInChatThread(ListCreateAPIView):
     queryset = Message.objects.all()

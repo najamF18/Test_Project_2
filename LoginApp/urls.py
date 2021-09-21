@@ -1,16 +1,17 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
-from .views import RegisterUserView, LoginView, LogoutView, ChangePasswordView, RequestChangePasswordView, ListLoggedInUser
+from .views import RegisterUserView, LoginView, LogoutView, ChangePasswordView, ListLoggedInUser
 from django.conf.urls.static import static
+from rest_framework.authtoken import views
 
 urlpatterns = [
-    path('api/users/register', RegisterUserView.as_view(), name='register_user'),
-    path('api/users/login', LoginView.as_view(), name='login_view'),
-    path('logout-view', LogoutView.as_view(), name='logout_view'),
-    path('change-password-view/<str:email>', ChangePasswordView.as_view(), name='change_password'),
-    path('api/users/reset-password', RequestChangePasswordView.as_view(), name='request_change_password'),
-    path('api/users/profile/', ListLoggedInUser.as_view(), name='logged_in_user_data'),
+    path('LoginApp/register', RegisterUserView.as_view(), name='register_user'),
+    path('LoginApp/login', LoginView.as_view(), name='login_view'),
+    path('LoginApp/logout-view', LogoutView.as_view(), name='logout_view'),
+    path('LoginApp/change-password-view', ChangePasswordView.as_view(), name='change_password'),
+    path('LoginApp/profile/', ListLoggedInUser.as_view(), name='logged_in_user_data'),
+    path('LoginApp/api-token-auth/', views.obtain_auth_token)
     # path('/api/users/search/<str:email>', ListLoggedInUser.as_view(), name='logged_in_user_data'),
     
 

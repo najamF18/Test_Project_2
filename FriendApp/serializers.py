@@ -14,19 +14,26 @@ class FriendListSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = FriendList
-        fields ='__all__'
+        # fields = '__all__'
+        exclude = ('user',)
         # depth = 1
         
-    def to_representation(self, instance):
-        rep = super(FriendListSerializer, self).to_representation(instance)
-        rep['user'] = instance.user.email
-        return rep
+    # def to_representation(self, instance):
+    #     rep = super(FriendListSerializer, self).to_representation(instance)
+    #     rep['user'] = instance.user.email
+    #     return rep
         
 class FriendRequestSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = FriendRequest
-        fields ='__all__'
+        # fields ='__all__'
+        exclude = ('receiver',)
+        
+    def to_representation(self, instance):
+        rep = super(FriendRequestSerializer, self).to_representation(instance)
+        rep['sender'] = instance.sender.email
+        return rep
         
 class RequestSerializer(serializers.Serializer):
     id = serializers.IntegerField()

@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from .models import FriendList, FriendRequest
 from rest_framework.views import APIView
-from rest_framework.generics import CreateAPIView, ListAPIView, UpdateAPIView, RetrieveAPIView, ListCreateAPIView
+from rest_framework.generics import CreateAPIView, ListAPIView, UpdateAPIView, RetrieveAPIView, ListCreateAPIView, DestroyAPIView
 from .serializers import FriendListSerializer, RequestSerializer, FriendRequestSerializer
 from rest_framework.response import Response
 from LoginApp.models import User
@@ -15,21 +15,16 @@ from itertools import chain
 class ListAllFriendsView(ListAPIView):
     queryset = FriendList.objects.all()
     serializer_class = FriendListSerializer
-    authentications_classes = [BasicAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request):
         obj = FriendList.objects.filter(user=request.user)
         friend_list_serializer = self.serializer_class(obj, many=True, context={"request":request})
-        if friend_list_serializer:
             # when we user 'filter' while querying data we need to return friend_list_serializer.data so data is in json
-            return Response(friend_list_serializer.data)
-        else:
-            return Response({"message":"something went wrong"})
+        return Response(friend_list_serializer.data)
         
 class SendFriendRequestView(CreateAPIView):
     queryset = FriendRequest.objects.all()
     serializer_class = RequestSerializer
-    authentications_classes = [BasicAuthentication]
     permission_classes = [IsAuthenticated]
     def post(self, request):
         try:
@@ -42,21 +37,16 @@ class SendFriendRequestView(CreateAPIView):
 class ListAllFriendRequestView(ListAPIView):
     queryset = FriendRequest.objects.all()
     serializer_class = FriendRequestSerializer
-    authentications_classes = [BasicAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self,request):
         obj = FriendRequest.objects.filter(receiver=request.user)  
         print(request.user)
         friend_request_list_serializer = self.serializer_class(obj, many=True, context={"request":request})
-        if friend_request_list_serializer:
             # when we user 'filter' while querying data we need to return friend_list_serializer.data so data is in json
-            return Response(friend_request_list_serializer.data)
-        else:
-            return Response({"message":"something went wrong"})
+        return Response(friend_request_list_serializer.data)
         
 class AcceptRequestView(APIView):
     serializer_class = RequestSerializer
-    authentications_classes = [BasicAuthentication]
     permission_classes = [IsAuthenticated]
     def post(self, request):
         try:
@@ -72,21 +62,18 @@ class AcceptRequestView(APIView):
         except Exception as e:
             return Response({":message":"Something went wrong"})
         
-class DeleteRequestView(APIView):
+class DeleteRequestView(DestroyAPIView):
     serializer_class = RequestSerializer
-    authentications_classes = [BasicAuthentication]
     permission_classes = [IsAuthenticated]
-    def post(self, request):
-        try:
-            friend_request = FriendRequest.objects.get(id=request.data["id"])
-            friend_request.delete()
-            return Response({"message": "Friend Request Deleted"})
-        except Exception as e:
-            return Response({":message":"Something went wrong"})
+    queryset = FriendRequest.objects.all()
+    lookup_field = 'id'
+    
+    def delete(self, request, *args, **kwargs):
+        super().delete(request, *args, **kwargs)
+        return Response({"status":"Particular Request has been deleted"})
     
 class UnfriendView(APIView):
     serializer_class = RequestSerializer
-    authentications_classes = [BasicAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request, user_id):
         try:
@@ -102,7 +89,6 @@ class UnfriendView(APIView):
 class PeopleYouMayKnow(ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    authentications_classes = [BasicAuthentication]
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
