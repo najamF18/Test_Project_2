@@ -2,6 +2,12 @@ from django.db import models
 from django.contrib.auth.base_user import BaseUserManager
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import AbstractUser
+from django.dispatch import receiver
+from django.urls import reverse
+from django_rest_passwordreset.signals import reset_password_token_created
+from django.core.mail import send_mail 
+from django.core.mail import EmailMessage
+from baseModel.base_model import BaseModel
 
 class CustomUserManager(BaseUserManager):
     """
@@ -35,7 +41,7 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 
-class User(AbstractUser):
+class User(AbstractUser, BaseModel):
     username = None
     email = models.EmailField(_('email address'), unique=True)
     first_name = models.CharField(max_length=256, null=True, blank=True)

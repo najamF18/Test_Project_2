@@ -39,6 +39,6 @@ class RequestChangePasswordSerializer(serializers.Serializer):
 
 
 class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(max_length=200)
     new_password = serializers.CharField(max_length=200)
-    confirm_new_password = serializers.CharField(max_length=200)
         
