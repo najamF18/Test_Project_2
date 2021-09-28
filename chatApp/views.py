@@ -14,7 +14,6 @@ from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 class ListAllThreadOfLoggedUser(ListAPIView):
     queryset = ChatThread.objects.all()
     serializer_class = ChatThreadSerializer
-    authentications_classes = [BasicAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request):
         # if you want to execute 'OR' in django query that is how
@@ -25,17 +24,12 @@ class ListAllThreadOfLoggedUser(ListAPIView):
 class ListAllMessagesInThread(ListAPIView):
     queryset = ChatThread.objects.all()
     serializer_class = MessageSerializer
-    authentications_classes = [BasicAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request, chat_id):
         try:
             thread = ChatThread.objects.get(id=chat_id)
             if thread.sender == request.user or thread.receiver == request.user:
                 messages = Message.objects.filter(thread=thread)
-            # photos_list = []
-            # for m in messages:
-            #     photos_list.append(photos.objects.filter(message=m))
-            # print(photos_list)
                 messages_serialized = self.serializer_class(messages, many=True, context={"request":request})
                 return Response(messages_serialized.data)
             else:
@@ -47,17 +41,13 @@ class ListAllMessagesInThread(ListAPIView):
 class SendMessageInChatThread(ListCreateAPIView):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
-    authentications_classes = [BasicAuthentication]
     permission_classes = [IsAuthenticated]
-    # parser_classes = (FormParser, MultiPartParser,JSONParser)
     def post(self, request):
         response = dict()
         message_serialized = self.serializer_class(data=request.data, context={'request': request})
-        # print(message_serialized)
         if message_serialized.is_valid():
             message_serialized.save()
             return Response({"status": "Your message has been sent"})
-        
         else:
             print(message_serialized.errors)
             return Response({"status": "Your message could not be sent been sent"})
