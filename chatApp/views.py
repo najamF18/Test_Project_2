@@ -9,6 +9,8 @@ from django.db.models import Q
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
+from rest_framework.renderers import JSONRenderer, MultiPartRenderer
+
 # Create your views here.
 
 class ListAllThreadOfLoggedUser(ListAPIView):
@@ -42,9 +44,11 @@ class SendMessageInChatThread(ListCreateAPIView):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
     permission_classes = [IsAuthenticated]
+    # renderer_classes = [MultiPartRenderer]
     def post(self, request):
         response = dict()
         message_serialized = self.serializer_class(data=request.data, context={'request': request})
+        # print("these are files", request.data)
         if message_serialized.is_valid():
             message_serialized.save()
             return Response({"status": "Your message has been sent"})
