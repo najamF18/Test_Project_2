@@ -23,7 +23,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 # Create your views here.
     
-class RegisterUserView(ListCreateAPIView):
+class RegisterUserView(CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     
@@ -48,12 +48,6 @@ class LoginView(APIView):
         data = request.data
         try:
             user = User.objects.get(email=data["email"])
-        except Exception as e:
-            print(e)
-        user_auth = authenticate(email=data["email"], password=data["password"])
-        print(request.user)
-        if user_auth:
-            login(request, user)
             token = Token.objects.get_or_create(user=user)
             print(token[0].key)
             print(request.user)
@@ -61,28 +55,22 @@ class LoginView(APIView):
             response["message"] = "User logged in succesfully"
             response["token"] = token[0].key
             return Response(response)
-        else:
-            
-            return Response({"message":"Credentials provided, are not correct"})
+        except Exception as e:
+            print(e)
         
 class LogoutView(APIView):
     
-    # authentications_classes = [TokenAuthentication]
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
+    
     def get(self, request):
-        if request.user.is_authenticated:
-            token = Token.objects.get(user=request.user)
-            token.delete()
-            logout(request)
-            return Response({"message": "successfully logged out"})
-        else:
-            return Response({"message":"No user is logged in"})
+        token = Token.objects.get(user=request.user)
+        token.delete()
+        return Response({"message": "successfully logged out"})
         
 
 class ChangePasswordView(APIView):
     
     serializer_class = ChangePasswordSerializer
-    # authentications_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     
     def post(self, request):
@@ -103,7 +91,6 @@ class ChangePasswordView(APIView):
 class ListLoggedInUser(RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    # authentications_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request):
         try:

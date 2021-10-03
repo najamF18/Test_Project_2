@@ -31,14 +31,16 @@ class MessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Message
         # fields = "__all__"
-        exclude = ('sender',)
+        exclude = ('sender','is_active')
         
     def create(self, validated_data):
-        pictures_data = validated_data.pop('attachments')
-        print("this is profile photos popped", pictures_data)
         validated_data["sender"] = self.context["request"].user
-        msg = Message.objects.create(**validated_data)
-        # print(msg.message_pics.profile_photos)
-        for image_data in pictures_data:
-            photos.objects.create(message=msg, images=image_data)
+        if 'attachments' in validated_data:
+            pictures_data = validated_data.pop('attachments')
+            msg = Message.objects.create(**validated_data)
+            for image_data in pictures_data:
+                photos.objects.create(message=msg, **image_data)
+        else:
+            msg = Message.objects.create(**validated_data)
+
         return msg
